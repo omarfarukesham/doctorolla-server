@@ -84,6 +84,15 @@ async function run() {
         const doctors = await doctorCollection.find().toArray();
         res.send(doctors);
       })
+
+      //doctor delete rest api  here....................................
+      app.delete('/doctor/:email', verifyJWT, verifyAdmin, async (req, res) => {
+        const email = req.params.email;
+        const filter = {email: email};
+        const result = await doctorCollection.deleteOne(filter);
+        res.send(result);
+      })
+      
       //user data loading from db to ui dashboard..................
       app.get('/users',verifyToken, async(req, res)=>{
         const users = await userCollection.find().toArray()
