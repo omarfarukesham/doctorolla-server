@@ -40,6 +40,7 @@ async function run() {
       const serviceCollection = client.db("doctorola").collection('services')
       const userAppointment = client.db("doctorola").collection('appointment')
       const userCollection = client.db("doctorola").collection('users')
+      const doctorCollection = client.db("doctorola").collection('doctors')
 
 
       //data sending to ui from mongodb api ....................
@@ -48,8 +49,20 @@ async function run() {
           const cursor = serviceCollection.find(query)
           const result = await cursor.toArray()
           res.send(result)
-      })
+      }) 
+      app.get('/service', async(req, res)=>{
+          const query = {};
+          const cursor = serviceCollection.find(query).project({name: 1})
+          const result = await cursor.toArray()
+          res.send(result)
+      }) 
 
+      app.post('/doctor', async (req, res) => {
+        const doctor = req.body;
+        const result = await doctorCollection.insertOne(doctor);
+        res.send(result);
+      });
+      
       //user data loading from db to ui dashboard..................
       app.get('/users',verifyToken, async(req, res)=>{
         const users = await userCollection.find().toArray()
