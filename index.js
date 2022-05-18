@@ -43,6 +43,19 @@ async function run() {
       const doctorCollection = client.db("doctorola").collection('doctors')
 
 
+      //verify admin without admin user will not able to upload doctor information.......................
+      const verifyAdmin = async (req, res, next) => {
+        const requester = req.decoded.email;
+        const requesterAccount = await userCollection.findOne({ email: requester });
+        if (requesterAccount.role === 'admin') {
+          next();
+        }
+        else {
+          res.status(403).send({ message: 'forbidden' });
+        }
+      }
+
+
       //data sending to ui from mongodb api ....................
       app.get('/services', async(req, res)=>{
           const query = {};
@@ -50,6 +63,8 @@ async function run() {
           const result = await cursor.toArray()
           res.send(result)
       }) 
+
+      //this api will work for addDoctor dropdown .....................
       app.get('/service', async(req, res)=>{
           const query = {};
           const cursor = serviceCollection.find(query).project({name: 1})
@@ -57,17 +72,25 @@ async function run() {
           res.send(result)
       }) 
 
-      app.post('/doctor', async (req, res) => {
+      //rest api for add doctors user who is admin or not, .......................
+      app.post('/doctor',verifyToken, verifyAdmin, async (req, res) => {
         const doctor = req.body;
         const result = await doctorCollection.insertOne(doctor);
         res.send(result);
       });
-      
+
+      //get doctor from database to ui ..................... 
+      app.get('/doctor', verifyJWT, verifyAdmin, async(req, res) =>{
+        const doctors = await doctorCollection.find().toArray();
+        res.send(doctors);
+      })
       //user data loading from db to ui dashboard..................
       app.get('/users',verifyToken, async(req, res)=>{
         const users = await userCollection.find().toArray()
         res.send(users)
       })
+
+
       // rest api for insert new user or update user info when they will login or sign Up from UI.........
       app.put('/user/:email', async(req, res)=>{
         const email = req.params.email 
@@ -83,6 +106,8 @@ async function run() {
         res.send({result, token})
 
       })
+
+
       //user is admin or not, checking rest api............................
       app.get('/admin/:email', async(req, res) =>{
         const email = req.params.email;
